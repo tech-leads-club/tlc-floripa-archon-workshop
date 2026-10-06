@@ -1,0 +1,90 @@
+name: loop-group-14
+description: Demonstra uma pipeline de produção e revisão repetida até aprovação
+
+mutates_checkout: false
+returns: ciclo
+
+nodes:
+  - id: ciclo
+    loop_group:
+      max_iterations: 4
+      fresh_context: true
+
+      # loop_group não suporta until_field diretamente.
+      # O until_bash lê o campo booleano produzido pelo revisor.
+      until_bash: 'test "$revisar.output.aprovado" = "true"'
+
+      nodes:
+        - id: produzir
+          model: small
+          allowed_tools: []
+
+          prompt: |
+            Solicitação original:
+
+            $ARGUMENTS
+
+            Proposta da iteração anterior:
+
+            $LOOP_PREV.produzir.output
+
+            Feedback da revisão anterior:
+
+            $LOOP_PREV.revisar.output.feedback
+
+            Se não existir proposta anterior, produza a primeira versão.
+
+            Se existir uma proposta anterior, revise-a para resolver
+            especificamente o feedback recebido.
+
+            A proposta deve conter:
+            1. Objetivo
+            2. Etapas
+            3. Riscos
+            4. Critério de conclusão
+
+            Não invente requisitos.
+
+        - id: revisar
+          depends_on: [produzir]
+          model: small
+          context: fresh
+          allowed_tools: []
+
+          prompt: |
+            Solicitação original:
+
+            $ARGUMENTS
+
+            Proposta que deve ser revisada:
+
+            $produzir.output
+
+            Avalie se a proposta:
+            - responde à solicitação original;
+            - possui objetivo claro;
+            - possui etapas executáveis;
+            - identifica riscos;
+            - possui critério de conclusão;
+            - não inventa requisitos.
+
+            Defina "aprovado" como true somente quando todos os
+            critérios forem atendidos.
+
+            Quando não estiver aprovada, escreva em "feedback"
+            exatamente o que precisa ser corrigido.
+
+          output_format:
+            type: object
+            properties:
+              aprovado:
+                type: boolean
+              feedback:
+                type: string
+            required:
+              - aprovado
+              - feedback
+
+# archon workflow run loop-group-14 \
+#  --no-worktree \
+#  "Problema: relatórios são publicados sem uma verificação consistente. Isso importa porque erros chegam aos gestores. Precisamos definir o processo antes do próximo fechamento mensal. O resultado desejado é um plano curto de revisão. Ele deve exigir critérios objetivos e manter a responsabilidade humana pela publicação. Será aceito quando apresentar objetivo, etapas, riscos e critério de conclusão."

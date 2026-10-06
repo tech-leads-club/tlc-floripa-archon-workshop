@@ -1,0 +1,61 @@
+name: producer-reviewer-09
+description: Demonstra produção seguida de revisão independente
+
+mutates_checkout: false
+returns: revisar
+
+nodes:
+  - id: propor
+    model: small
+    allowed_tools: []
+
+    prompt: |
+      Leia a solicitação:
+
+      $ARGUMENTS
+
+      Escreva uma proposta curta contendo:
+      1. Problema
+      2. Solução sugerida
+      3. Riscos
+      4. Próximos passos
+
+      Não invente requisitos.
+      Declare claramente qualquer informação ausente.
+
+  # LLM-as-a-judge
+  - id: revisar
+    depends_on: [propor]
+    # Importante: Isso força o revisor a iniciar uma sessão independente. Ele não herda o raciocínio ou a conversa interna do produtor.
+    context: fresh
+    model: small
+    allowed_tools: []
+
+    # Aqui estamos apenas concatenando textos, o que pode gerar confusão no prompt de onde está
+    # cada coisa. É possível usar estratégias como marcadores <bloco>$ARGUMENTS</bloco> e "systemPrompt:" para definir
+    # o layout a ser interpretado de forma confiável, evitando prompt injection por parte do utilizador.
+    prompt: |
+      Você é um revisor independente.
+
+      Solicitação original:
+
+      $ARGUMENTS
+
+      Proposta produzida:
+
+      $propor.output
+
+      Verifique:
+      1. Se a proposta responde à solicitação original.
+      2. Se existem afirmações sem evidência.
+      3. Se algum requisito foi ignorado.
+      4. Se os próximos passos são concretos.
+
+      Produza uma revisão curta.
+      Cite os trechos problemáticos.
+      Não reescreva toda a proposta.
+      Se não houver problema relevante, diga isso claramente.
+
+# Exemplo: archon workflow run producer-reviewer-09 \
+#  --no-worktree \
+#  "Problema: relatórios internos são montados manualmente. Isso importa porque há inconsistências entre equipes. Precisamos decidir agora porque o volume dobrará no próximo trimestre. O resultado desejado é uma proposta inicial de automação. A solução deve ser auto-hospedável, auditável e não pode enviar dados para serviços não aprovados. A proposta será aceita se explicar a solução, os riscos e os próximos passos."

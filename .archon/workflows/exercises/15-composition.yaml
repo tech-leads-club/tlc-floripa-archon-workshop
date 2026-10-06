@@ -1,0 +1,66 @@
+name: composition-15
+description: Demonstra composição de workflows reutilizáveis com include
+
+mutates_checkout: false
+returns: apresentar
+
+nodes:
+  - id: propor
+    model: small
+    allowed_tools: []
+
+    prompt: |
+      Solicitação original:
+
+      $ARGUMENTS
+
+      Produza um plano curto contendo:
+      1. Objetivo
+      2. Etapas
+      3. Riscos
+      4. Critério de conclusão
+
+      Não invente requisitos.
+
+  - id: revisao
+    depends_on: [propor]
+
+    # Com include, não é criado outro run. Tudo permanece no mesmo:
+    # - run;
+    # - worktree;
+    # - histórico;
+    # - diretório de artefatos;
+    # - cálculo de custo;
+    # - fluxo de execução.
+    #
+    # Use include quando os nós devem compartilhar o mesmo ciclo de vida. 
+    # Use workflow quando o trabalho precisa de execução, artefatos, custo e governança próprios.
+    include: review-block-15
+
+    with:
+      material: "$propor.output"
+      criterio: >-
+        O plano deve responder à solicitação original, apresentar objetivo,
+        etapas, riscos e critério de conclusão, sem inventar requisitos.
+
+  - id: apresentar
+    depends_on: [revisao]
+    model: small
+    allowed_tools: []
+
+    prompt: |
+      Plano produzido:
+
+      $propor.output
+
+      Resultado da revisão:
+
+      Aprovado: $revisao.output.aprovado
+      Parecer: $revisao.output.parecer
+
+      Apresente o plano e o parecer da revisão de forma organizada.
+      Não altere a decisão do revisor.
+
+# archon workflow run composition-15 \
+#  --no-worktree \
+#  "Problema: novos integrantes não sabem como publicar uma versão. Isso gera erros e atrasos. Precisamos documentar o processo antes da próxima release. O resultado desejado é um plano curto de publicação. Ele deve preservar revisão humana e permitir rollback. Será aceito quando tiver objetivo, etapas, riscos e critério claro de conclusão."

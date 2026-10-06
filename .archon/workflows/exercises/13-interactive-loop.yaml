@@ -1,0 +1,98 @@
+name: interactive-loop-13
+description: Demonstra refinamento iterativo com feedback humano
+
+interactive: true
+mutates_checkout: false
+returns: propor
+
+nodes:
+  - id: propor
+    model: small
+    allowed_tools: []
+
+    # O loop não cria um child run do Archon.
+    # Ele repete uma tarefa dentro do mesmo nó e workflow run,
+    # por isso podemos por "until_field: ready" dentro do loop
+    # mesmo definindo ele fora do loop, em output format.
+    #
+    # O output_format valida a resposta de cada iteração do loop,
+    # então quando ready for exatamente true, o loop pode terminar.
+    #
+    # fresh_context inicia uma nova sessão de IA por cada ITERAÇÃO,
+    # não pela execução daquele nó. Por isso, estado anterior continua
+    # disponível explicitamente em $LOOP_PREV_OUTPUT, e o feedback
+    # em $LOOP_USER_INPUT, mantendo o contexto atualizado ao longo das
+    # iterações no loop.
+    #
+    # Não relacionado porém útil para aprendizado:
+    # loop_group:, como veremos mais adiante, também executa dentro
+    # do mesmo workflow run. Somente um nó workflow: cria um
+    # child run separado, com contexto/estado/parâmetros isolados.
+    loop:
+      prompt: |
+        Solicitação original:
+
+        $ARGUMENTS
+
+        Resultado estruturado da iteração anterior:
+
+        $LOOP_PREV_OUTPUT
+
+        Feedback humano recebido:
+
+        $LOOP_USER_INPUT
+
+        Se não existir resultado anterior, crie a primeira proposta.
+
+        Se existir resultado anterior, use o campo "proposta" como
+        a versão anterior e revise-o atendendo especificamente ao
+        feedback humano. Preserve as partes que não precisam mudar.
+
+        A proposta deve conter:
+        1. Objetivo
+        2. Etapas
+        3. Riscos
+        4. Critério de conclusão
+
+        Não invente requisitos.
+
+        Preencha "proposta" com a versão completa.
+        Defina "ready" como true somente quando a proposta atender
+        completamente à solicitação original e ao feedback mais recente.
+
+      until_field: ready
+      max_iterations: 5
+      fresh_context: true
+      interactive: true
+
+      gate_message: |
+        Revise o campo "proposta". Envie um comentário para gerar
+        uma nova versão ou aprove sem comentário para concluir.
+
+      # signal_completes decide se um resultado já considerado completo pode 
+      # encerrar imediatamente a primeira execução de um loop interativo.
+      # Ou seja, se o modelo determinar ready = true, o harness considera
+      # também e segue. E não queremos isso, queremos um human-in-the-loop
+      # aqui, independente do modelo achar que ready é verdadeiro.
+      # 
+      # Se ready: false, o Archon pausa e mostra gate_message.
+      # Se ready: true e signal_completes: false, o Archon ainda pausa para confirmação humana.
+      # Se ready: true e signal_completes: true, o loop termina automaticamente, sem pedir aprovação.
+      signal_completes: false
+
+    output_format:
+      type: object
+      properties:
+        proposta:
+          type: string
+        ready:
+          type: boolean
+      required:
+        - proposta
+        - ready
+
+
+# archon workflow run interactive-loop-13 \
+#   --no-worktree \
+#   "Problema: o relatório mensal não possui revisão formal. Isso importa porque erros chegam à diretoria. Precisamos definir o processo agora antes do próximo fechamento. O resultado desejado é um plano curto de revisão. O processo deve ser auditável e exigir decisão humana antes da publicação. Será aceito quando definir etapas, riscos e um critério objetivo de conclusão."
+

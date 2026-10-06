@@ -1,0 +1,47 @@
+name: review-block-15
+description: Bloco reutilizável de revisão, destinado a composição com include
+
+inputs:
+  material:
+    required: true
+    description: Conteúdo que deve ser revisado
+
+  criterio:
+    default: Clareza, completude e ausência de requisitos inventados
+    description: Critério utilizado durante a revisão
+
+returns: revisar
+
+nodes:
+  - id: revisar
+    model: small
+    context: fresh
+    allowed_tools: []
+
+    prompt: |
+      Material para revisão:
+
+      $INPUTS.material
+
+      Critério da revisão:
+
+      $INPUTS.criterio
+
+      Avalie o material de forma independente.
+
+      Defina "aprovado" como true somente quando o material
+      atender completamente ao critério.
+
+      Em "parecer", explique objetivamente a decisão e indique
+      as correções necessárias quando ele não estiver aprovado.
+
+    output_format:
+      type: object
+      properties:
+        aprovado:
+          type: boolean
+        parecer:
+          type: string
+      required:
+        - aprovado
+        - parecer

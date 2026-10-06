@@ -1,0 +1,28 @@
+name: parallelism-02
+description: Demonstra dependências e paralelismo no Archon
+
+# aqUI JÁ COMEÇAMOS a mostrar como os nós criam dependências e 
+# Aqui também vemos o paralelismo, que é a execução de nós independentes ao mesmo tempo.
+nodes:
+  - id: inicio
+    bash: |
+      echo "Início: $(date +%T)"
+
+  - id: tarefa_a
+    depends_on: [inicio]
+    bash: |
+      echo "Tarefa A começou: $(date +%T)"
+      sleep 2
+      echo "Tarefa A terminou: $(date +%T)"
+
+  - id: tarefa_b
+    depends_on: [inicio]
+    bash: |
+      echo "Tarefa B começou: $(date +%T)"
+      sleep 2
+      echo "Tarefa B terminou: $(date +%T)"
+
+  - id: fim
+    depends_on: [tarefa_a, tarefa_b]
+    bash: |
+      echo "As duas tarefas terminaram: $(date +%T)"

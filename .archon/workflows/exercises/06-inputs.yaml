@@ -1,0 +1,44 @@
+name: inputs-06
+description: Demonstra parâmetros obrigatórios e valores padrão
+
+# Esses inputs vem de fora.
+inputs:
+  tipo:
+    # o required faz a execução ser interrompida sem o input.
+    required: true
+    description: Tipo de trabalho, BUG ou FEATURE
+
+  prioridade:
+    # É possível definir defaults para não usar required também.
+    default: normal
+    description: Prioridade do trabalho
+
+returns: finalizar
+
+nodes:
+  - id: mostrar_entrada
+    bash: |
+      echo "Tipo recebido: $INPUTS_TIPO"
+      echo "Prioridade recebida: $INPUTS_PRIORIDADE"
+
+  - id: tratar_bug
+    depends_on: [mostrar_entrada]
+    # Acessando INPUTS para os condicionais
+    when: "$INPUTS.tipo == 'BUG'"
+    bash: |
+      echo "Preparando correção de bug com prioridade $INPUTS_PRIORIDADE"
+
+  - id: tratar_feature
+    depends_on: [mostrar_entrada]
+    when: "$INPUTS.tipo == 'FEATURE'"
+    # Conceito: Dentro de bash:, o input vira variável de ambiente, enntão INPUTS.tipo vira INPUTS_TIPO como env!
+    bash: |
+      echo "Preparando feature com prioridade $INPUTS_PRIORIDADE"
+
+  - id: finalizar
+    depends_on:
+      - tratar_bug
+      - tratar_feature
+    trigger_rule: none_failed_min_one_success
+    bash: |
+      echo "Processamento concluído"

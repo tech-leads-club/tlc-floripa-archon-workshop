@@ -1,0 +1,32 @@
+name: outputs-03
+description: Demonstra passagem de dados entre nós
+
+# Aqui já entra o conceito de returns. Lembrando que o stdout ainda sim na CLI pode ser
+# o do último nó. Oq importa é que no RESULTADO do workflow, o returns: que determina,
+# ou seja, é o returns que é passado pra frente, não oq é exibido na tela ali na CLI.
+# Ex.: archon workflow get c27dca48-66ac-4ad0-9d82-5530666243bd --json |  jq '.terminal_record.returns'
+returns: apresentar
+
+nodes:
+  - id: produzir
+    bash: |
+      echo "21"
+
+  - id: transformar
+    depends_on: [produzir]
+    # E aqui, vemos acesso aos outputs dos nós anteriores, ou seja
+    # a passagem de dados entre nós, de maneira rudimentar ainda,
+    # veremos como passar isso de forma estruturada em workflows mais complexos.
+    bash: |
+      valor=$produzir.output
+      resultado=$((valor * 2))
+      echo "$resultado"
+
+  - id: apresentar
+    depends_on: [transformar]
+    bash: |
+      original=$produzir.output
+      transformado=$transformar.output
+
+      echo "Valor original: $original"
+      echo "Valor transformado: $transformado"

@@ -1,0 +1,80 @@
+name: human-approval-12
+description: Demonstra uma pausa para decisão humana
+
+# interactive: true declara que o workflow pode pausar para interação humana e, por isso, não deve ser iniciado em background.
+interactive: true
+mutates_checkout: false
+returns: finalizar
+
+nodes:
+  - id: propor
+    model: small
+
+    prompt: |
+      Leia a solicitação:
+
+      $ARGUMENTS
+
+      Produza um plano curto contendo:
+      1. Objetivo
+      2. Etapas
+      3. Riscos
+      4. Critério de conclusão
+
+      Não invente informações ausentes.
+
+  - id: decisao
+    depends_on: [propor]
+
+    approval:
+      message: |
+        Revise o plano antes de continuar:
+
+        $propor.output
+
+
+      # Só é possível responder com decisões pré-definidas aqui, dá erro se tentar algo genérico.
+      decisions:
+        - id: approve
+          label: Aprovar
+
+        - id: needs-revision
+          label: Solicitar revisão
+
+  - id: aprovado
+    depends_on: [decisao]
+    when: "$decisao.output.decision == 'approve'"
+    bash: |
+      decision_text=$decisao.output.text
+      echo "Plano aprovado pelo operador"
+      echo "Comentário: $decision_text"
+
+  - id: revisar
+    depends_on: [decisao]
+    when: "$decisao.output.decision == 'needs-revision'"
+    bash: |
+      decision_text=$decisao.output.text
+      echo "Plano precisa de revisão"
+      echo "Feedback: $decision_text"
+
+  - id: finalizar
+    depends_on:
+      - aprovado
+      - revisar
+    trigger_rule: none_failed_min_one_success
+    bash: |
+      echo "Decisão humana processada"
+
+# archon workflow run human-approval-12 \
+#  --no-worktree \
+#  "Problema: o relatório mensal não possui revisão formal. Isso importa porque erros chegam à diretoria. Precisamos corrigir agora antes do próximo fechamento. O resultado desejado é um processo curto de revisão. Ele deve manter rastreabilidade e exigir decisão humana antes da publicação. Será aceito quando houver etapas, riscos e um critério claro de conclusão."
+
+#archon workflow get <RUN_ID> --json |
+#  jq '{status, approval: .metadata.approval}'
+
+# Para aprovar:
+# archon workflow respond <RUN_ID> approve "Plano revisado e aprovado."
+#
+# Ou, para solicitar revisão:
+# archon workflow respond <RUN_ID> needs-revision \
+#  "Detalhe o plano de rollback antes da execução."

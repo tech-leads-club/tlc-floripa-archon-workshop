@@ -1,0 +1,46 @@
+name: structured-output-04
+description: Demonstra saída JSON validada e acesso aos campos
+
+returns: apresentar
+
+nodes:
+  - id: classificar
+  # Supondo que recebemos um JSON em um nó anterior
+  # Precisa do %s\n para evitar problemas de interpretar chars do JSON e garantir
+  # a quebra de linha
+    bash: |
+      printf '%s\n' '{"tipo":"BUG","prioridade":2,"urgente":true}'
+
+    # Aqui já começamos a criar saídas estruturadas, com validação de tipos e propriedades.
+    # O massa é que isso vira parâmetros para os nós subsequentes, então teremos a certeza
+    # que o nó vai receber os dados corretos e no formato esperado, validado pelo
+    # harness, não o modelo de IA achando que está entregando certo sem estar de fato.
+    output_format:
+      # temos: object, array, string, number, integer, boolean e null
+      type: object
+      properties:
+        tipo:
+          type: string
+          enum: [BUG, FEATURE]
+        prioridade:
+          type: integer
+        urgente:
+          type: boolean
+      required:
+        - tipo
+        - prioridade
+        - urgente
+
+  - id: apresentar
+    depends_on: [classificar]
+    # Tomar cuidado com base: $node.output versus bash: "$node.output", no segundo ele adiciona aspas pois transforma pra string, então ficaria 'valor' no segundo, com aspas.
+    bash: |
+      tipo=$classificar.output.tipo
+      prioridade=$classificar.output.prioridade
+      urgente=$classificar.output.urgente
+
+      echo "Tipo: $tipo"
+      echo "Prioridade: $prioridade"
+      echo "Urgente: $urgente"
+      echo "-"
+      echo "Raw output: $classificar.output"

@@ -1,0 +1,18 @@
+name: aprendizado-01
+description: Primeiro workflow de aprendizado do Archon
+
+nodes:
+  - id: hello
+    bash: |
+      echo "Olá, Archon"
+      echo "Este nó foi executado sem usar IA."
+
+  - id: despedida
+    depends_on: [hello]
+    bash: |
+      echo "O primeiro nó terminou"
+      echo "Vamos despedir-nos"
+
+# o stdout padrão é o do último nó executado, mas da pra ver os outros nos logs!
+# A ideia aqui é começar mostrando que o Archon é um orquestrador de nós, e não
+# uma IA que executa tudo sozinha.

@@ -1,0 +1,51 @@
+name: conditionals-05
+description: Demonstra caminhos condicionais com when
+
+nodes:
+  - id: classificar
+    bash: |
+      printf '%s\n' '{"tipo":"BUG","prioridade":2}'
+
+    output_format:
+      type: object
+      properties:
+        tipo:
+          type: string
+          # MUITO IMPORTANTE: Permite lançar erro de execução e parar a execução caso o nó anterior retorne um tipo inválido (ainda mais se veio de LLM).
+          enum: [BUG, FEATURE]
+        prioridade:
+          type: integer
+      required:
+        - tipo
+        - prioridade
+
+# Se não tiver nenhum when: correspondente, simplesmente fica skipped. O que enforça dar erro ou não é o enum ali em cima... aqui é só conditional mesmo.
+  - id: tratar_bug
+    depends_on: [classificar]
+    when: "$classificar.output.tipo == 'BUG'"
+    bash: |
+      echo "Executando o fluxo de correção de bug"
+
+  - id: tratar_feature
+    depends_on: [classificar]
+    when: "$classificar.output.tipo == 'FEATURE'"
+    bash: |
+      echo "Executando o fluxo de desenvolvimento de feature"
+
+# O trigger_rule permite que finalizar rode quando uma rota concluiu e as demais foram ignoradas pelo when:. Ou seja, se tratar_bug ou tratar_feature foi executado, ele executa.
+# Importante: sem o trigger_rule, se algum depends_on tiver sido skipped, o nó também será skipped! ele NÃO executa sem ter todas as dependências. por isso o trigger_rule muda essa estratégia: se 1 executar, entra na execução.
+# O padrão é trigger_rule: all_success.
+  - id: finalizar
+    bash: |
+      echo "Finalizado."
+    depends_on:
+      - tratar_bug
+      - tratar_feature
+    trigger_rule: none_failed_min_one_success
+
+# | trigger_rule | Quando o nó executa |
+# |---|---|
+# | `all_success` (Padrão) | Todas as dependências concluíram com sucesso |
+# | `one_success` | Pelo menos uma dependência concluiu com sucesso |
+# | `none_failed_min_one_success` | Pelo menos uma teve sucesso e nenhuma falhou |
+# | `all_done` | Todas terminaram, independentemente de sucesso, falha ou `skipped` |

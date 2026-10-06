@@ -1,0 +1,62 @@
+name: outcome-11
+description: Demonstra resultado de execução separado do resultado de negócio
+
+mutates_checkout: false
+
+returns: avaliar
+
+# outcome_field aponta para um campo booleano obrigatório dentro do output_format desse nó.
+# 
+# O Archon faz este mapeamento:
+# - aprovado: true  → outcome: succeeded
+# - aprovado: false → outcome: failed
+#
+# A distinção principal:
+# - status:  O motor conseguiu executar o workflow?
+# - outcome: O workflow concluiu que o objetivo foi atingido?
+# 
+# O objetivo desse campo é definir de forma contextualizada o status do workflow, não apenas
+# "rodou todos os nós com sucesso", mas "o nó passou nos critérios do negócio?".
+#
+# Casos de uso: em CI/CD, precisa de um success or failed, usa o outcome_field ao invés do status do workflow.
+# Isso pode controlar continuação de outro pipeline, deploy, criação de PR, notificações, etc.
+outcome_field: aprovado
+
+
+nodes:
+  - id: avaliar
+    model: small
+    allowed_tools: []
+
+    prompt: |
+      Avalie o briefing abaixo:
+
+      $ARGUMENTS
+
+      Defina "aprovado" como true somente se o briefing apresentar:
+      1. O problema
+      2. Por que ele importa
+      3. Por que precisa ser resolvido agora
+      4. O resultado desejado
+      5. As invariantes
+      6. Os critérios de aceitação
+
+      Os elementos também precisam ser coerentes entre si.
+
+      Não preencha lacunas por conta própria.
+      Em "motivo", explique brevemente a aprovação ou liste os problemas.
+
+    output_format:
+      type: object
+      properties:
+        aprovado:
+          type: boolean
+        motivo:
+          type: string
+      required:
+        - aprovado
+        - motivo
+
+# archon workflow run outcome-11 \
+#  --no-worktree \
+#  "Problema: relatórios internos são preparados manualmente. Isso importa porque inconsistências afetam decisões. Precisamos resolver agora porque o volume dobrará no próximo trimestre. O resultado desejado é uma proposta de automação. A solução deve ser auto-hospedável, auditável e não pode enviar dados a serviços não aprovados. Será aceita se explicar a solução, os riscos e os próximos passos."

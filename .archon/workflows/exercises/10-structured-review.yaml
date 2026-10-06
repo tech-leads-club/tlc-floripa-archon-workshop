@@ -1,0 +1,89 @@
+name: structured-review-10
+description: Demonstra uma decisão de IA governando caminhos determinísticos
+
+mutates_checkout: false
+returns: finalizar
+
+nodes:
+  - id: propor
+    model: small
+    allowed_tools: []
+
+    prompt: |
+      Leia a solicitação:
+
+      $ARGUMENTS
+
+      Produza uma proposta curta contendo:
+      1. Problema
+      2. Solução
+      3. Riscos
+      4. Próximos passos
+
+      Não invente requisitos ou evidências.
+
+  - id: revisar
+    depends_on: [propor]
+    context: fresh
+    model: small
+    allowed_tools: []
+
+    prompt: |
+      Atue como revisor independente.
+
+      Solicitação original:
+
+      $ARGUMENTS
+
+      Proposta:
+
+      $propor.output
+
+      Aprove somente se:
+      - a proposta responder ao problema;
+      - respeitar todas as restrições;
+      - não contiver afirmações inventadas;
+      - apresentar riscos e próximos passos concretos.
+
+      O campo "motivo" deve justificar o veredito brevemente.
+
+    # Aqui já introduzimos um output_format estruturado da IA para os próximos nós,
+    # ou seja, utilizamos LLMs para produzir JSON para o nosso harness trabalhar com
+    # os nodes, condições, parâmetros, etc. Fascinante!!
+    output_format:
+      type: object
+      properties:
+        aprovado:
+          type: boolean
+        motivo:
+          type: string
+      required:
+        - aprovado
+        - motivo
+
+  - id: continuar
+    depends_on: [revisar]
+    # Utilizando o resultado da IA como um parâmetro convencional, como qualquer outro nó, pois veio estruturado.
+    when: "$revisar.output.aprovado == true"
+    bash: |
+      echo "Proposta aprovada"
+      echo "Motivo: $revisar.output.motivo"
+
+  - id: bloquear
+    depends_on: [revisar]
+    when: "$revisar.output.aprovado == false"
+    bash: |
+      echo "Proposta bloqueada"
+      echo "Motivo: $revisar.output.motivo"
+
+  - id: finalizar
+    depends_on:
+      - continuar
+      - bloquear
+    trigger_rule: none_failed_min_one_success
+    bash: |
+      echo "Revisão processada"
+
+# archon workflow run structured-review-10 \
+#  --no-worktree \
+#  "Problema: relatórios internos são montados manualmente e apresentam inconsistências. Isso prejudica decisões e precisa ser resolvido agora porque o volume aumentará no próximo trimestre. O resultado desejado é uma proposta inicial de automação. Ela deve ser auto-hospedável, auditável e não pode enviar dados para serviços não aprovados. Será aceita se explicar solução, riscos e próximos passos."

@@ -1,0 +1,32 @@
+name: arguments-07
+description: Demonstra mensagem livre e parâmetros nomeados
+
+# Quando usar:
+# ARGUMENTS: objetivo, problema, contexto, solicitação em linguagem natural
+# inputs:    configuração, modo, formato, branch, opções conhecidas
+
+# Forma de uso - Dentro de bash:
+# $ARGUMENTS
+# $INPUTS_FORMATO
+
+# Forma de uso - Dentro de prompt:
+#prompt: |
+#  Solicitação: $ARGUMENTS
+#  Formato: $INPUTS.formato
+
+inputs:
+  formato:
+    default: curto
+    description: Formato desejado para a resposta
+
+returns: apresentar
+
+nodes:
+  - id: apresentar
+    bash: |
+      echo "Mensagem livre:"
+      echo "$ARGUMENTS"
+
+      echo ""
+      echo "Formato configurado:"
+      echo "$INPUTS_FORMATO"

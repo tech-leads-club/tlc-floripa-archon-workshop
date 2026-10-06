@@ -1,0 +1,36 @@
+name: first-ai-08
+description: Demonstra um nó de IA sem acesso a ferramentas
+
+# Sendo false, este workflow apenas lê o repositório. Ele não cria, altera, remove, move ou versiona arquivos no checkout.
+mutates_checkout: false
+returns: analisar
+
+nodes:
+  - id: analisar
+    # Podemos usar modelos customizados ou estes configuráveis no Archon:
+    # model: small - tarefa simples e barata
+    # model: medium - tarefa que exige mais análise
+    # model: large - tarefa difícil ou crítica
+    # ou customizados, como model: codex/gpt-5.6-luna
+    model: small
+    # Tools autorizadas pra LLM executar, ex: allowed_tools: [Read, Grep, Glob]
+    # Para tools de MCPs, temos uma configuração separada que veremos mais pra frente, no formato "mcp: ..."
+    # Alguns providers, como o Codex via PI, não suportam nativamente o allowed_tools aqui, então este bloqueio pode ser ignorado pelo Codex via PI.
+    allowed_tools: []
+
+    # Diferentemente de bash, que é determinístico, aqui temos um output que será
+    # executado por um LLM. Não definimos output ainda, então a saída do agente
+    # será em texto comum, não estruturado.
+    prompt: |
+      Analise a solicitação abaixo:
+
+      $ARGUMENTS
+
+      Produza:
+      1. Um resumo do problema.
+      2. O resultado desejado.
+      3. As informações que ainda estão faltando.
+
+      Não altere arquivos.
+      Não invente informações ausentes.
+      Seja breve e responda em português.

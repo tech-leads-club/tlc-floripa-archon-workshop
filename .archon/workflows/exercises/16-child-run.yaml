@@ -1,0 +1,55 @@
+name: child-run-16
+description: Demonstra execução de um workflow como child run governado
+
+mutates_checkout: false
+returns: apresentar
+
+nodes:
+  - id: propor
+    model: small
+    allowed_tools: []
+
+    prompt: |
+      Solicitação original:
+
+      $ARGUMENTS
+
+      Produza um plano curto contendo:
+      1. Objetivo
+      2. Etapas
+      3. Riscos
+      4. Critério de conclusão
+
+      Não invente requisitos.
+
+  - id: revisao_delegada
+    depends_on: [propor]
+
+    # O mesmo do exemplo anterior, mas rodando de forma isolada.
+    workflow: review-block-15
+
+    with:
+      material: "$propor.output"
+      criterio: >-
+        O plano deve responder à solicitação original, apresentar objetivo,
+        etapas, riscos e critério de conclusão, sem inventar requisitos.
+
+    isolation: inherit
+
+  - id: apresentar
+    depends_on: [revisao_delegada]
+    model: small
+    allowed_tools: []
+
+    prompt: |
+      Plano produzido pelo workflow principal:
+
+      $propor.output
+
+      Resultado recebido do child run:
+
+      Aprovado: $revisao_delegada.output.aprovado
+      Parecer: $revisao_delegada.output.parecer
+
+      Apresente o plano e o parecer de maneira organizada.
+      Não altere a decisão produzida pelo child run.
