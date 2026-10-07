@@ -4,9 +4,9 @@
 
 # Workshop de IA do TLC Floripa (06/Out/2026)
 
-Exercícios progressivos de workflows do Archon para o TLC Floripa. Cada arquivo em `.archon/workflows/exercises/` é um workflow independente. A sequência começa em nós determinísticos de shell e chega em revisão com modelo, decisão humana e composição de workflows.
+Exercícios progressivos de workflows do [Archon](https://archon.diy/) para o TLC Floripa. Cada arquivo em `.archon/workflows/exercises/` é um workflow independente. A sequência começa em nós determinísticos de shell e chega em revisão com modelo, decisão humana e composição de workflows.
 
-O Archon orquestra nós. Um nó pode ser um comando, um modelo ou outro workflow. A saída de um nó vira entrada do próximo, com validação, condição e pausa para uma pessoa quando o arquivo declara isso.
+O [Archon](https://archon.diy/) orquestra nós. Um nó pode ser um comando, um modelo ou outro workflow. A saída de um nó vira entrada do próximo, com validação, condição e pausa para uma pessoa quando o arquivo declara isso.
 
 ## Pré-requisitos
 
