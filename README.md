@@ -24,7 +24,7 @@ archon workflow list
 Rode um exercício pelo `name` declarado no YAML:
 
 ```bash
-archon workflow run aprendizado-01
+archon workflow run hello-01
 ```
 
 Os exercícios 01 a 07 só executam shell. Dá para percorrer o grafo sem chamar um modelo:
@@ -73,7 +73,7 @@ Cada YAML traz comentários sobre o conceito daquele passo e, quando faz sentido
 
 | # | Workflow | Arquivo | O que mostra |
 | --- | --- | --- | --- |
-| 01 | `aprendizado-01` | `01-hello.yaml` | Dois nós de shell em sequência, com `depends_on` |
+| 01 | `hello-01` | `01-hello.yaml` | Dois nós de shell em sequência, com `depends_on` |
 | 02 | `parallelism-02` | `02-parallelism.yaml` | Nós independentes em paralelo e um nó que espera os dois |
 | 03 | `outputs-03` | `03-outputs.yaml` | `$node.output` entre nós e `returns` como resultado do workflow |
 | 04 | `structured-output-04` | `04-structured-output.yaml` | JSON validado com `output_format` e acesso a campos |
