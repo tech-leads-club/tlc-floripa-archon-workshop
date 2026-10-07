@@ -1,8 +1,9 @@
 name: parallelism-02
 description: Demonstra dependências e paralelismo no Archon
 
-# aqUI JÁ COMEÇAMOS a mostrar como os nós criam dependências e 
-# Aqui também vemos o paralelismo, que é a execução de nós independentes ao mesmo tempo.
+# Aqui já começamos a mostrar como os nós criam dependências e 
+# também vemos o paralelismo, que é a execução de nós
+# independentes ao mesmo tempo.
 nodes:
   - id: inicio
     bash: |
