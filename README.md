@@ -1,4 +1,4 @@
-# Workshop Archon — TLC Floripa
+# Workshop de IA do TLC Floripa (06/Out/2026)
 
 Exercícios progressivos de workflows do Archon para o TLC Floripa. Cada arquivo em `.archon/workflows/exercises/` é um workflow independente. A sequência começa em nós determinísticos de shell e chega em revisão com modelo, decisão humana e composição de workflows.
 
